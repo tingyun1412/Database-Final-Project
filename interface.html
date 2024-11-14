@@ -228,7 +228,6 @@
         // 選擇項目
         function selectCategory(category) {
             selectedCategory = category;
-            alert(`已選擇：${category}`);
         }
 
         // 創建歌單
@@ -251,7 +250,7 @@
                 songItem.classList.add('song-item');
                 songItem.innerHTML = `
                     <input type="checkbox" id="song-${index}" onclick="toggleSongSelection('${song.name}')">
-                    <label for="song-${index}">${song.name} - ${song.artist}</label>
+                    <label for="song-${index}">${song.name} - ${song.artist} - ${song.language}</label>
                 `;
                 songListContainer.appendChild(songItem);
             });
@@ -284,6 +283,16 @@
             };
 
             reader.readAsText(file);  // 讀取 CSV 文件
+        }
+
+        // 處理歌曲選擇
+        function toggleSongSelection(songName) {
+            const index = selectedSongs.indexOf(songName);
+            if (index === -1) {
+                selectedSongs.push(songName);
+            } else {
+                selectedSongs.splice(index, 1);
+            }
         }
     </script>
 </body>

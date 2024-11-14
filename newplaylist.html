@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Final Project</title>
+    <style>
+        /* 設定 body 使用 flex 排版並使內容垂直水平居中 */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh; /* 使 body 高度為視窗高度 */
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9; /* 背景顏色 */
+        }
+
+        /* 設定容器的標題 */
+        h2 {
+            text-align: center;
+            color: #333;
+            font-size: 24px;
+        }
+
+        /* 設定按鈕樣式 */
+        button {
+            background-color: #1db954; /* Spotify 綠色 */
+            color: white;
+            border: none;
+            padding: 15px 32px;
+            font-size: 16px;
+            border-radius: 25px; /* 圓角 */
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        /* 按鈕 hover 效果 */
+        button:hover {
+            background-color: #1aa34a; /* 深一點的綠色 */
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <h2>點擊連結至 Spotify 創建歌單</h2>
+        <button onclick="window.location.href='https://www.spotify.com';">Click Me!</button>
+    </div>
+</body>
+</html>
