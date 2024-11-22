@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>喜好歌單分析</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -29,8 +28,8 @@
             margin-right: 20px;
             border-right: 2px solid #333;
             width: 30%;
-            height: 600px;  /* 固定高度 */
-            overflow-y: auto;  /* 當內容超過高度時顯示滾動條 */
+            height: 600px;
+            overflow-y: auto;
         }
         .sidebar h2 {
             writing-mode: vertical-rl;
@@ -102,30 +101,13 @@
             bottom: 0;
             text-align: center;
         }
-        .song-list {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        .song-item {
-            margin: 5px 0;
-            display: flex;
-            align-items: center;
-        }
-        .song-item label {
-            margin-left: 10px;
-            font-size: 16px;
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- 側邊欄：顯示"喜好歌單"文字 -->
+        <!-- 側邊欄 -->
         <div class="sidebar">
-            <!-- 文件上傳輸入框 -->
-            <input type="file" id="csvFileInput" accept=".csv" onchange="handleFileUpload(event)" />
-            <div id="song-list" class="song-list">
-                <!-- 歌曲選項會動態生成 -->
-            </div>
+            <h2>喜好歌單</h2>
         </div>
 
         <!-- 主內容區 -->
@@ -134,7 +116,7 @@
             <div class="buttons">
                 <button onclick="showAnalysis('language')">語言</button>
                 <button onclick="showAnalysis('genre')">風格</button>
-                <button onclick="showAnalysis('emotion')">Emotion指數</button>
+                <button onclick="showAnalysis('emotion')">Emo指數</button>
                 <button onclick="showAnalysis('artist')">歌手</button>
             </div>
 
@@ -143,13 +125,8 @@
                 <div class="chart">
                     <canvas id="myChart"></canvas>
                 </div>
-
-                <!-- 右側選項和創建歌單 -->
                 <div class="right-panel">
-                    <!-- 分析結果選擇區域 -->
                     <div class="options" id="options"></div>
-
-                    <!-- 創建歌單按鈕 -->
                     <div class="create-playlist">
                         <button onclick="createPlaylist()">創建歌單</button>
                     </div>
@@ -160,17 +137,16 @@
 
     <script>
         let selectedCategory = '';
-        let selectedSongs = [];  // 儲存選擇的歌曲
 
         // 初始化圖表
         const ctx = document.getElementById('myChart').getContext('2d');
         let myChart = new Chart(ctx, {
             type: 'pie',
             data: {
-                labels: ['泰文', '韓文'],
+                labels: [],
                 datasets: [{
-                    data: [60, 40], // 預設數據，可以用後端傳回的結果替代
-                    backgroundColor: ['#FF6384', '#36A2EB'],
+                    data: [],
+                    backgroundColor: [],
                     borderWidth: 1
                 }]
             },
@@ -179,20 +155,18 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        display: false, // 隱藏圖例
+                        display: false,
                     }
                 }
             }
         });
 
-        // 不同顏色組
         const colorPalette = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
 
-        // 顯示不同分析圖表
+        // 顯示不同分析
         function showAnalysis(type) {
             let labels, data;
 
-            // 根據按鈕類型設置圖表的數據
             switch(type) {
                 case 'language':
                     labels = ['泰文', '韓文'];
@@ -210,90 +184,40 @@
                     labels = ['歌手A', '歌手B', '歌手C'];
                     data = [25, 35, 40];
                     break;
+                default:
+                    console.error("未知分析類型:", type);
+                    return;
             }
 
-            // 更新圖表數據
+            // 更新圖表
             myChart.data.labels = labels;
             myChart.data.datasets[0].data = data;
             myChart.data.datasets[0].backgroundColor = labels.map((_, index) => colorPalette[index % colorPalette.length]);
             myChart.update();
 
-            // 更新選項區域
+            // 更新右側選項
             const options = document.getElementById("options");
             options.innerHTML = labels.map((category, index) => 
                 `<p onclick="selectCategory('${category}')" style="background-color: ${colorPalette[index % colorPalette.length]};">${category}</p>`
             ).join('');
         }
 
-        // 選擇項目
         function selectCategory(category) {
             selectedCategory = category;
         }
 
-        // 創建歌單
         function createPlaylist() {
             if (!selectedCategory) {
                 alert("請選擇一個類型！");
                 return;
             }
             alert(`創建歌單，類型：${selectedCategory}`);
-            // 此處可以新增與後端溝通的代碼，將選擇的類型傳送給後端進行歌單創建
         }
 
-        // 顯示歌單
-        function displaySongs(songs) {
-            const songListContainer = document.getElementById('song-list');  // 獲取歌單列表容器
-            songListContainer.innerHTML = '';  // 清空現有內容
-
-            songs.forEach((song, index) => {
-                const songItem = document.createElement('div');
-                songItem.classList.add('song-item');
-                songItem.innerHTML = `
-                    <input type="checkbox" id="song-${index}" onclick="toggleSongSelection('${song.name}')">
-                    <label for="song-${index}">${song.name} - ${song.artist} - ${song.language}</label>
-                `;
-                songListContainer.appendChild(songItem);
-            });
-        }
-
-        // 處理文件上傳
-        function handleFileUpload(event) {
-            const file = event.target.files[0];  // 取得用戶選擇的文件
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const csv = e.target.result;
-
-                // 使用 PapaParse 解析 CSV
-                Papa.parse(csv, {
-                    complete: function(results) {
-                        const songs = results.data.map(row => {
-                            return {
-                                name: row[0],        // 假設 CSV 第一欄是歌名
-                                artist: row[1],      // 假設 CSV 第二欄是歌手名
-                                language: row[2]     // 假設 CSV 第三欄是語言
-                            };
-                        });
-
-                        // 顯示歌曲
-                        displaySongs(songs);
-                    }
-                });
-            };
-
-            reader.readAsText(file);  // 讀取 CSV 文件
-        }
-
-        // 處理歌曲選擇
-        function toggleSongSelection(songName) {
-            const index = selectedSongs.indexOf(songName);
-            if (index === -1) {
-                selectedSongs.push(songName);
-            } else {
-                selectedSongs.splice(index, 1);
-            }
-        }
+        // 頁面加載時顯示語言分析
+        window.onload = function() {
+            showAnalysis('language');
+        };
     </script>
 </body>
 </html>
