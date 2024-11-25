@@ -37,3 +37,10 @@ ON DUPLICATE KEY UPDATE
     singer_age = VALUES(singer_age),
     singer_type = VALUES(singer_type),
     singer_nation = VALUES(singer_nation);
+    
+SELECT *
+FROM Singer
+INTO OUTFILE '/var/lib/mysql-files/Singer_output.csv'
+FIELDS TERMINATED BY ',' 
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n';

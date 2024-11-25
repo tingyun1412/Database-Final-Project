@@ -29,4 +29,11 @@ SET album_name = @album,
 
 INSERT IGNORE INTO Album (album_name, song_id, song_name, singer_name)
 SELECT album_name, song_id, song_name, singer_name
-FROM AlbumStaging
+FROM AlbumStaging;
+
+SELECT *
+FROM Album
+INTO OUTFILE '/var/lib/mysql-files/Album_output.csv'
+FIELDS TERMINATED BY ',' 
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n';
