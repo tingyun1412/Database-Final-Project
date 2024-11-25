@@ -6,8 +6,8 @@ from fuzzSearch import search_genius_lyrics, get_lyrics_from_genius, detect_lyri
 
 app = Flask(__name__)
 
-CLIENT_ID = "afb4cadea90546dfac352aa53ea53256"
-CLIENT_SECRET = "ae002b361fde40bd8505b15a2b9bc0ce"
+CLIENT_ID = "01dfa2aba3384ac4ba4b278af29d2f6d"
+CLIENT_SECRET = "e672de7d54d34ef4b745be950e084e5b"
 REDIRECT_URI = "http://localhost:8888/callback"
 SCOPE = "user-top-read"
 
