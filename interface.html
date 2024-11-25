@@ -33,7 +33,6 @@
         }
         .sidebar h2 {
             writing-mode: vertical-rl;
-            transform: rotate(180deg);
             font-size: 24px;
         }
         .content {
@@ -218,6 +217,18 @@
         window.onload = function() {
             showAnalysis('language');
         };
+
+        // 讀取 CSV 文件
+        function loadSongList() {
+            fetch('http://127.0.0.1:5000/api/songlist')
+                .then(response => response.text())
+                .then(csvData => {
+                    console.log(csvData);  // 這裡可以處理 CSV 資料，將歌單顯示出來
+                })
+                .catch(error => console.error('無法讀取歌單資料:', error));
+        }
+
+        loadSongList();  // 頁面加載時讀取 CSV 資料
     </script>
 </body>
 </html>
