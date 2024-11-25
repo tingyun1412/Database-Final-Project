@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>喜好歌單分析</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://pyscript.net/latest/pyscript.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -23,7 +24,7 @@
             max-width: 1200px;
         }
         .sidebar {
-            text-align: center;
+            text-align: left;
             padding: 10px;
             margin-right: 20px;
             border-right: 2px solid #333;
@@ -32,16 +33,22 @@
             overflow-y: auto;
         }
         .sidebar h2 {
-            writing-mode: vertical-rl;
             font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .sidebar ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .sidebar li {
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
         }
         .content {
             padding: 10px;
-            position: relative;
             width: 70%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
         }
         .buttons {
             display: flex;
@@ -56,49 +63,28 @@
         }
         .chart-container {
             display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            width: 100%;
+            justify-content: center;
+            margin-bottom: 20px;
         }
         .chart {
-            width: 250px;
-            height: 250px;
-            margin-right: 20px;
+            width: 300px;
+            height: 300px;
         }
         .right-panel {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
             margin-top: 20px;
-            gap: 10px;
-            width: 200px;
-        }
-        .options {
             text-align: left;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            gap: 10px;
-            margin-bottom: 20px;
         }
         .options p {
             cursor: pointer;
             padding: 5px 10px;
-            color: #fff;
+            background-color: #f0f0f0;
             border-radius: 5px;
-            font-weight: bold;
-        }
-        .create-playlist {
-            margin-top: 20px;
-            text-align: center;
+            margin-bottom: 10px;
         }
         .create-playlist button {
             padding: 10px;
             font-size: 16px;
             cursor: pointer;
-            position: relative;
-            bottom: 0;
-            text-align: center;
         }
     </style>
 </head>
@@ -107,28 +93,27 @@
         <!-- 側邊欄 -->
         <div class="sidebar">
             <h2>喜好歌單</h2>
+            <ul id="songList"></ul>
         </div>
 
         <!-- 主內容區 -->
         <div class="content">
-            <!-- 選擇按鈕 -->
+            <!-- 按鈕 -->
             <div class="buttons">
                 <button onclick="showAnalysis('language')">語言</button>
                 <button onclick="showAnalysis('genre')">風格</button>
                 <button onclick="showAnalysis('emotion')">Emo指數</button>
                 <button onclick="showAnalysis('artist')">歌手</button>
             </div>
-
-            <!-- 圓餅圖和右側選項區域 -->
+            <!-- 圓餅圖 -->
             <div class="chart-container">
-                <div class="chart">
-                    <canvas id="myChart"></canvas>
-                </div>
-                <div class="right-panel">
-                    <div class="options" id="options"></div>
-                    <div class="create-playlist">
-                        <button onclick="createPlaylist()">創建歌單</button>
-                    </div>
+                <canvas id="myChart"></canvas>
+            </div>
+            <!-- 選項及創建歌單 -->
+            <div class="right-panel">
+                <div id="options"></div>
+                <div class="create-playlist">
+                    <button onclick="createPlaylist()">創建歌單</button>
                 </div>
             </div>
         </div>
@@ -145,35 +130,32 @@
                 labels: [],
                 datasets: [{
                     data: [],
-                    backgroundColor: [],
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'],
                     borderWidth: 1
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        display: false,
+                        display: true,
+                        position: 'bottom'
                     }
                 }
             }
         });
 
-        const colorPalette = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
-
         // 顯示不同分析
         function showAnalysis(type) {
             let labels, data;
-
-            switch(type) {
+            switch (type) {
                 case 'language':
-                    labels = ['泰文', '韓文'];
-                    data = [60, 40];
+                    labels = ['中文', '英文', '韓文'];
+                    data = [40, 35, 25];
                     break;
                 case 'genre':
                     labels = ['流行', '搖滾', '爵士'];
-                    data = [30, 50, 20];
+                    data = [50, 30, 20];
                     break;
                 case 'emotion':
                     labels = ['開心', '悲傷', '興奮'];
@@ -187,22 +169,20 @@
                     console.error("未知分析類型:", type);
                     return;
             }
-
-            // 更新圖表
             myChart.data.labels = labels;
             myChart.data.datasets[0].data = data;
-            myChart.data.datasets[0].backgroundColor = labels.map((_, index) => colorPalette[index % colorPalette.length]);
             myChart.update();
 
             // 更新右側選項
             const options = document.getElementById("options");
-            options.innerHTML = labels.map((category, index) => 
-                `<p onclick="selectCategory('${category}')" style="background-color: ${colorPalette[index % colorPalette.length]};">${category}</p>`
+            options.innerHTML = labels.map((category, index) =>
+                `<p onclick="selectCategory('${category}')">${category}</p>`
             ).join('');
         }
 
         function selectCategory(category) {
             selectedCategory = category;
+            alert(`已選擇: ${category}`);
         }
 
         function createPlaylist() {
@@ -214,21 +194,36 @@
         }
 
         // 頁面加載時顯示語言分析
-        window.onload = function() {
+        window.onload = function () {
             showAnalysis('language');
         };
-
-        // 讀取 CSV 文件
-        function loadSongList() {
-            fetch('http://127.0.0.1:5000/api/songlist')
-                .then(response => response.text())
-                .then(csvData => {
-                    console.log(csvData);  // 這裡可以處理 CSV 資料，將歌單顯示出來
-                })
-                .catch(error => console.error('無法讀取歌單資料:', error));
-        }
-
-        loadSongList();  // 頁面加載時讀取 CSV 資料
     </script>
+
+    <!-- PyScript 加載歌單 -->
+    <py-script>
+import asyncio
+import pandas as pd
+import pyodide
+
+async def load_csv():
+    await pyodide.loadPackage("pandas")
+    try:
+        # 替換為你的 CSV 文件名稱
+        csv_url = "song_data.csv"
+        df = pd.read_csv(csv_url)
+
+        # 更新 HTML 列表
+        song_list_element = Element("songList")
+        song_list_html = ""
+        for _, row in df.iterrows():
+            song_list_html += f"<li>{row['歌名']} - {row['歌手']} ({row['語言']})</li>"
+        song_list_element.write(song_list_html)
+
+    except Exception as e:
+        Element("songList").write(f"<li>載入錯誤: {str(e)}</li>")
+
+# 排程協程執行
+asyncio.ensure_future(load_csv())
+    </py-script>
 </body>
 </html>
