@@ -1,0 +1,62 @@
+.container {
+    display: flex;
+    width: 100%;
+}
+
+.sidebar {
+    width: 250px;
+    padding: 20px;
+    border-right: 1px solid #ccc;
+}
+
+.sidebar table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.sidebar th {
+    text-align: left;
+    padding: 8px;
+    border-bottom: 1px solid #ccc;
+}
+
+.content {
+    flex: 1;
+    padding: 20px;
+}
+
+.buttons {
+    margin-bottom: 20px;
+}
+
+.buttons button {
+    margin-right: 10px;
+    padding: 8px 16px;
+}
+
+.chart-container {
+    display: flex;
+}
+
+.chart {
+    flex: 1;
+    min-height: 400px;
+}
+
+.right-panel {
+    width: 300px;
+    margin-left: 20px;
+}
+
+.filters {
+    padding: 20px;
+    border-top: 1px solid #ccc;
+}
+
+.filter-group {
+    margin-bottom: 15px;
+}
+
+.charts {
+    padding: 20px;
+}
