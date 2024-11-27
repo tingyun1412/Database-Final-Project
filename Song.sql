@@ -59,19 +59,11 @@ ON DUPLICATE KEY UPDATE
     energy = SongStaging.energy,
     song_genre = SongStaging.song_genre;
 
-SELECT *
-FROM Song
+(SELECT 'song_id', 'song_name', 'energy', 'song_timing', 'song_genre')
+UNION ALL
+(SELECT song_id, song_name, CAST(energy AS CHAR), song_timing, song_genre
+FROM Song)
 INTO OUTFILE '/var/lib/mysql-files/Song_output.csv'
-FIELDS TERMINATED BY ',' 
+FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
 LINES TERMINATED BY '\n';
-
-
-
-
-
-
-
-
-
-
