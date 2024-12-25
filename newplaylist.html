@@ -1,50 +1,89 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Database Final Project</title>
+    <title>創建歌單</title>
     <style>
-        /* 設定 body 使用 flex 排版並使內容垂直水平居中 */
         body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh; /* 使 body 高度為視窗高度 */
-            margin: 0;
             font-family: Arial, sans-serif;
-            background-color: #f4f4f9; /* 背景顏色 */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f4f4f9;
         }
-
-        /* 設定容器的標題 */
-        h2 {
-            text-align: center;
+        h1 {
             color: #333;
-            font-size: 24px;
         }
-
-        /* 設定按鈕樣式 */
+        ul {
+            list-style-type: none;
+            padding: 0;
+            width: 80%;
+            max-width: 600px;
+            margin: 20px 0;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        ul li {
+            padding: 10px 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        ul li:last-child {
+            border-bottom: none;
+        }
         button {
-            background-color: #1db954; /* Spotify 綠色 */
+            background-color: #1db954;
             color: white;
             border: none;
-            padding: 15px 32px;
+            padding: 10px 20px;
             font-size: 16px;
-            border-radius: 25px; /* 圓角 */
+            border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            margin: 10px;
         }
-
-        /* 按鈕 hover 效果 */
         button:hover {
-            background-color: #1aa34a; /* 深一點的綠色 */
+            background-color: #1aa34a;
         }
     </style>
 </head>
 <body>
-    <div>
-        <h2>點擊連結至 Spotify 創建歌單</h2>
-        <button onclick="window.location.href='https://www.spotify.com';">Click Me!</button>
-    </div>
+    <h1>您的歌單</h1>
+    <ul id="playlist"></ul>
+    <button onclick="goBack()">返回</button>
+    <button onclick="savePlaylist()">保存到 Spotify</button>
+
+    <script>
+        // 從 localStorage 中獲取歌曲清單
+        const playlist = JSON.parse(localStorage.getItem('playlist')) || [];
+        const playlistElement = document.getElementById('playlist');
+
+        // 顯示歌單
+        if (playlist.length > 0) {
+            playlist.forEach(song => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `${song.song} - ${song.artist}`;
+                playlistElement.appendChild(listItem);
+            });
+        } else {
+            playlistElement.innerHTML = "<li>目前無歌單資料</li>";
+        }
+
+        // 返回功能
+        function goBack() {
+            window.location.href = "interface___.html"; // 返回到主頁，您可以更換為實際的上一頁
+        }
+
+        // 保存到 Spotify
+        function savePlaylist() {
+            alert("歌單已成功保存至 Spotify！");
+            // 您可以在這裡新增實際與 Spotify API 互動的邏輯
+        }
+    </script>
 </body>
 </html>
