@@ -1,0 +1,382 @@
+<!-- 這是備案：如果寫不出來的話可以用這個 -->
+<!-- emo指數用範圍處理(丟Song_ouput.csv) -->
+
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>喜好歌單分析</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            display: flex;
+            padding: 20px;
+            background-color: #fff;
+            width: 80%;
+            max-width: 1200px;
+        }
+        .sidebar {
+            text-align: center;
+            padding: 10px;
+            margin-right: 20px;
+            border-right: 2px solid #333;
+            width: 30%;
+            height: 600px;
+            overflow-y: auto;
+        }
+        .sidebar h2 {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            font-size: 24px;
+        }
+        .content {
+            padding: 10px;
+            position: relative;
+            width: 70%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .buttons {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .buttons button {
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .chart-container {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            width: 100%;
+        }
+        .chart {
+            width: 250px;
+            height: 250px;
+            margin-right: 20px;
+        }
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-top: 20px;
+            gap: 10px;
+            width: 200px;
+        }
+        .options {
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .options p {
+            cursor: pointer;
+            padding: 5px 10px;
+            color: #fff;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .create-playlist {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .create-playlist button {
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            position: relative;
+            bottom: 0;
+            text-align: center;
+        }
+        .song-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .song-item {
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+        }
+        .song-item label {
+            margin-left: 10px;
+            font-size: 16px;
+        }
+        .upload-section {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .upload-section h3 {
+            margin-bottom: 10px;
+            font-size: 18px;
+            color: #333;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 側邊欄：顯示"喜好歌單"文字 -->
+        <div class="sidebar">
+            <!-- 第一格：上傳語言的 CSV 檔 -->
+            <div class="upload-section">
+                <h3>語言</h3>
+                <input type="file" id="languageCsvInput" accept=".csv" onchange="handleUserUpload(event, 'language')" />
+            </div>
+            
+            <!-- 第二格：上傳風格的 CSV 檔 -->
+            <div class="upload-section">
+                <h3>風格</h3>
+                <input type="file" id="genreCsvInput" accept=".csv" onchange="handleUserUpload(event, 'genre')" />
+            </div>
+            
+            <!-- 第三格：上傳 Emo 指數的 CSV 檔 -->
+            <div class="upload-section">
+                <h3>Emo 指數</h3>
+                <input type="file" id="emoCsvInput" accept=".csv" onchange="handleUserUpload(event, 'emotion')" />
+            </div>
+            
+            <!-- 第四格：上傳歌手的 CSV 檔 -->
+            <div class="upload-section">
+                <h3>歌手</h3>
+                <input type="file" id="artistCsvInput" accept=".csv" onchange="handleUserUpload(event, 'artist')" />
+            </div>
+        </div>
+        
+
+        <!-- 主內容區 -->
+        <div class="content">
+            <!-- 選擇按鈕 -->
+            <div class="buttons">
+                <button onclick="generateChart('language')">語言</button>
+                <button onclick="generateChart('genre')">風格</button>
+                <button onclick="generateChart('emotion')">Emo指數</button>
+                <button onclick="generateChart('artist')">歌手</button>
+            </div>
+            <div class="chart">
+                <canvas id="chartCanvas"></canvas>
+            </div>
+            
+
+            <!-- 圓餅圖和右側選項區域 -->
+            <div class="chart-container">
+                <div class="chart">
+                    <canvas id="languageChart"></canvas>
+                </div>
+
+                <!-- 右側選項和創建歌單 -->
+                <div class="right-panel">
+                    <!-- 分析結果選擇區域 -->
+                    <div class="options" id="options"></div>
+                
+                    <!-- 顯示歌單 -->
+                    <div class="song-list"></div>
+                
+                    <!-- 創建歌單按鈕 -->
+                    <div class="create-playlist">
+                        <input type="button" value="創建歌單" onclick="location.href='newplaylist.html'" />
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+    let dataStore = {
+        language: [],
+        genre: [],
+        emotion: [],
+        artist: [],
+    };
+
+    function handleUserUpload(event, type) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const text = e.target.result;
+            processCSVData(text, type);
+        };
+        reader.readAsText(file);
+    }
+
+    function processCSVData(csvText, type) {
+        console.log(`Processing ${type} data`);
+        const rows = csvText.split("\n").map(row => row.split(","));
+        const headers = rows.shift(); // 移除標題列
+
+        const columnIndex = {
+            language: 2, // 語言在第 3 欄
+            genre: 4,    // 風格是第 5 欄
+            emotion: 2,  // Emo指數在第 3 欄
+            artist: 1    // 歌手在第 2 欄
+        }[type];
+
+        // 儲存到對應資料結構
+        dataStore[type] = rows.map(row => ({
+            value: parseFloat(row[columnIndex]?.trim().replace(/"/g, '')), // 將字串轉換為浮點數，並去除引號
+            additionalInfo: row[1]?.trim().replace(/"/g, '') || null // 如果需要額外資料
+        })).filter(item => !isNaN(item.value)); // 過濾掉無效數據（不是有效的數字）
+
+        console.log(`${type} Data:`, dataStore[type]);
+    }
+
+
+
+    // 全局圖表實例
+    let currentChart = null;
+
+    // 更新或生成對應類型的 Pie Chart
+    function generateChart(type) {
+        if (!dataStore[type] || dataStore[type].length === 0) {
+            alert(`請先上傳 ${type} 的 CSV 檔案！`);
+            return;
+        }
+
+        console.log(`Generating ${type} chart`, dataStore[type]); // Debug：檢查資料
+
+        let dataCounts = {};
+        
+        if (type === 'emotion') {
+            // 對 Emo 指數數據進行分組
+            dataCounts = { "0~0.25": 0, "0.25~0.5": 0, "0.5~0.75": 0, "0.75~1": 0 };
+            dataStore[type].forEach(item => {
+                const value = parseFloat(item.value);
+                console.log(value); // Debug：檢查每個 Emo 指數的數值
+                if (value >= 0 && value < 0.25) {
+                    dataCounts["0~0.25"]++;
+                } else if (value >= 0.25 && value < 0.5) {
+                    dataCounts["0.25~0.5"]++;
+                } else if (value >= 0.5 && value < 0.75) {
+                    dataCounts["0.5~0.75"]++;
+                } else if (value >= 0.75 && value <= 1) {
+                    dataCounts["0.75~1"]++;
+                }
+            });
+        } else {
+            // 其他類型的統計
+            dataStore[type].forEach(item => {
+                const key = item.value;
+                dataCounts[key] = (dataCounts[key] || 0) + 1;
+            });
+        }
+
+        // 更新右側選項
+        const optionsContainer = document.getElementById('options');
+        optionsContainer.innerHTML = ''; // 清空舊選項
+        Object.keys(dataCounts).forEach(option => {
+            const optionElement = document.createElement('div');
+            optionElement.innerHTML = `
+                <label>
+                    <input type="checkbox" value="${option}" />
+                    ${option} (${dataCounts[option]})
+                </label>
+            `;
+            optionsContainer.appendChild(optionElement);
+        });
+
+        // 創建或更新圖表
+        const chartData = {
+            labels: Object.keys(dataCounts),
+            datasets: [{
+                data: Object.values(dataCounts),
+                backgroundColor: generateColors(Object.keys(dataCounts).length),
+            }],
+        };
+
+        if (currentChart) {
+            currentChart.destroy();
+        }
+        const ctx = document.getElementById("chartCanvas").getContext("2d");
+        currentChart = new Chart(ctx, {
+            type: "pie",
+            data: chartData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: "top" },
+                },
+            },
+        });
+    }
+
+
+
+
+    // 隨機生成顏色
+    function generateColors(count) {
+        const colors = [];
+        for (let i = 0; i < count; i++) {
+            colors.push(`hsl(${Math.floor(Math.random() * 360)}, 70%, 70%)`);
+        }
+        return colors;
+    }
+
+
+    function showAnalysis(type) {
+        // 根據按鈕類型顯示對應的圖表
+        switch(type) {
+            case 'language':
+                document.getElementById('languageChart').style.display = 'block';
+                break;
+            case 'genre':
+                document.getElementById('genreChart').style.display = 'block';
+                break;
+            case 'emotion':
+                document.getElementById('emotionChart').style.display = 'block';
+                break;
+            case 'artist':
+                document.getElementById('artistChart').style.display = 'block';
+                break;
+        }
+    }
+    function createPlaylist() {
+    // 收集所有勾選的選項（語言、風格、Emo 指數、歌手）
+    const checkedOptions = Array.from(document.querySelectorAll('#options input:checked'))
+        .map(checkbox => checkbox.value); // 獲取所有勾選的值
+
+    if (checkedOptions.length === 0) {
+        alert("請至少選擇一個分類!");
+        return;
+    }
+
+    // 過濾符合條件的歌曲
+    const filteredSongs = [];
+    for (const type in dataStore) {
+        filteredSongs.push(
+            ...dataStore[type].filter(item => checkedOptions.includes(item.value))
+        );
+    }
+
+    // 保存勾選的歌曲到 localStorage
+    localStorage.setItem('playlist', JSON.stringify(filteredSongs));
+
+    // 跳轉到 newplaylist.html
+    window.location.href = "newplaylist.html";
+}
+
+    </script>
+</body>
+</html>
