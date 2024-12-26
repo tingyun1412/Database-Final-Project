@@ -150,8 +150,17 @@
         <p>Spotify歌單連結: <a href="{{ playlist_link }}" target="_blank">{{ playlist_link }}</a></p>
     </div>
     {% endif %}
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-danger">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
     
     <script>
+        
         const timingData = {{ timing_count | tojson }};
         const genreData = {{ genre_count | tojson }};
         const languageData = {{ language_count | tojson }};
@@ -288,12 +297,40 @@
         }
 
         function createFilteredPlaylist() {
+            const filteredSongs = Array.from(document.querySelectorAll("#filteredSongs li"))
+                .map(li => li.textContent);
+    
+            if (filteredSongs.length === 0) {
+                alert('請先選擇要加入播放清單的歌曲');
+                return;
+            }
+    
             fetch('/create_spotify_playlist', {
                 method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    filtered_songs: filteredSongs
+                })
             })
-            .then(response => {
-                if (response.redirected) {
-                    window.location.href = response.url;
+            .then(response => response.json())
+            .then(data => {
+                if (data.redirect) {
+                    // 需要 Spotify 授權
+                    window.location.href = data.redirect;
+                } else if (data.playlist_link) {
+                    // 顯示播放清單連結
+                    const spotifyLinkDiv = document.querySelector('.spotify-link') || document.createElement('div');
+                    spotifyLinkDiv.className = 'spotify-link';
+                    spotifyLinkDiv.innerHTML = `<p>Spotify歌單連結: <a href="${data.playlist_link}" target="_blank">${data.playlist_link}</a></p>`;
+                    
+                    // 如果元素不存在，添加到頁面
+                    if (!document.querySelector('.spotify-link')) {
+                        document.body.appendChild(spotifyLinkDiv);
+                    }
+                } else if (data.error) {
+                    alert('建立播放清單時發生錯誤: ' + data.error);
                 }
             })
             .catch(error => {

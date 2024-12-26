@@ -142,42 +142,55 @@ def index():
 
 @app.route('/create_spotify_playlist', methods=['POST'])
 def create_spotify_playlist():
-   playlist_data = fetch_playlist_data()
-   
-   # 檢查是否已授權
-   if 'spotify_token' not in session:
-       # 存儲歌單資料到session
-       session['playlist_data'] = playlist_data
-       
-       auth_url = (
-           "https://accounts.spotify.com/authorize"
-           f"?client_id={CLIENT_ID}"
-           "&response_type=code" 
-           f"&redirect_uri={REDIRECT_URI}"
-           f"&scope={SCOPE}"
-           "&show_dialog=true"
-       )
-       return redirect(auth_url)
-   
-   # 已授權則直接建立歌單
-   token = session['spotify_token']
-   create_spotify_playlist_with_token(token, playlist_data)
-   return redirect(url_for('show_playlist'))
+    try:
+        filtered_songs = request.json.get('filtered_songs', [])
+        if not filtered_songs:
+            return jsonify({'error': '沒有選擇任何歌曲'}), 400
+        
+        if 'spotify_token' not in session:
+            # 保存篩選後的歌曲到 session
+            session['filtered_songs'] = filtered_songs
+            auth_url = (
+                "https://accounts.spotify.com/authorize"
+                f"?client_id={CLIENT_ID}"
+                "&response_type=code" 
+                f"&redirect_uri={REDIRECT_URI}"
+                f"&scope={SCOPE}"
+                "&show_dialog=true"
+            )
+            return jsonify({'redirect': auth_url})
+        
+        # 直接使用 create_spotify_playlist_with_songs
+        playlist_link = create_spotify_playlist_with_songs(session['spotify_token'], filtered_songs)
+        return jsonify({'playlist_link': playlist_link})
+        print("playlist link",playlist_link)
+        
+    except Exception as e:
+        print(f"Error creating playlist: {str(e)}")
+        return redirect(url_for('index'))
 
 
 @app.route('/spotify_callback')
 def spotify_callback():
     try:
+        print("Received Spotify callback")  # Debug log
         # Get authorization code
         code = request.args.get("code")
+        print(f"Received auth code: {code[:10]}...")  # 新增日誌
+        
         if not code:
+            print("No authorization code received")  # Debug log
             return redirect(url_for('index'))
             
         # Get access token
+        print(f"Got authorization code: {code[:10]}...") 
         access_token = get_spotify_token(code)
+        print("Successfully got access token")  # Debug log
         
+        session['spotify_token'] = access_token
         # Create playlist and add songs
-        playlist_link = create_spotify_playlist_with_songs(access_token)
+        filtered_songs = session.get('filtered_songs', [])
+        playlist_link = create_spotify_playlist_with_songs(access_token,filtered_songs)
         
         # Render template with playlist
         return display_playlist_page(playlist_link)
@@ -187,19 +200,32 @@ def spotify_callback():
         return redirect(url_for('index'))
 
 def get_spotify_token(code):
-    response = requests.post(
-        "https://accounts.spotify.com/api/token",
-        data={
-            "grant_type": "authorization_code",
-            "code": code,
-            "redirect_uri": REDIRECT_URI, 
-            "client_id": CLIENT_ID,
-            "client_secret": CLIENT_SECRET
-        }
-    )
-    return response.json()["access_token"]
+    print("Requesting access token")  # Debug log
+    try:
+        response = requests.post(
+            "https://accounts.spotify.com/api/token",
+            data={
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": REDIRECT_URI, 
+                "client_id": CLIENT_ID,
+                "client_secret": CLIENT_SECRET
+            }
+        )
+        response_data = response.json()
+        
+        if 'error' in response_data:
+            raise Exception(f"Spotify API Error: {response_data['error']}")
+            
+        if 'access_token' not in response_data:
+            raise Exception("No access token in response")
+            
+        return response_data["access_token"]
+    except Exception as e:
+        print(f"Error in get_spotify_token: {str(e)}")
+        raise
 
-def create_spotify_playlist_with_songs(access_token):
+def create_spotify_playlist_with_songs(access_token,filtered_songs):
     PLAYLIST_NAME = "My Filtered Playlist"
     PLAYLIST_DESC = "Filtered playlist"
     
@@ -220,11 +246,14 @@ def create_spotify_playlist_with_songs(access_token):
         }
     ).json()
     
+    
     # Add songs
     playlist_id = playlist["id"]
     playlist_data = fetch_playlist_data()
     
-    for song in playlist_data:
+    
+    filtered_playlist_data = [song for song in playlist_data if song['song_name'] in filtered_songs]
+    for song in filtered_playlist_data:
         search_query = f"track:{song['song_name']} artist:{song['singer_name']}"
         search_response = requests.get(
             "https://api.spotify.com/v1/search",
@@ -235,6 +264,7 @@ def create_spotify_playlist_with_songs(access_token):
                 "limit": 1
             }
         )
+        print(search_response)
         
         if search_response.json()["tracks"]["items"]:
             track_uri = search_response.json()["tracks"]["items"][0]["uri"]
