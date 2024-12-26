@@ -19,10 +19,14 @@ def process_songs(access_token):
     if response.status_code == 200:
         favorite_tracks = response.json().get("items", [])
         for track in favorite_tracks:
+            track_id = track['id']
             song_title = track['name']
             artist_name = [artist['name'] for artist in track['artists']]
             language = None
+            #test
+            print(f"song_name: {song_title} track_id: {track_id} \n")
             
+            #
             song_url = search_genius_lyrics(song_title, artist_name)
             if song_url:
                 lyrics = get_lyrics_from_genius(song_url)
@@ -32,12 +36,13 @@ def process_songs(access_token):
             song_info = {
                 "song_name": song_title,
                 "singer_name": ", ".join(artist_name),
-                "song_language": language if language else 'None'
+                "song_language": language if language else 'None',
+                "track_id": track_id
             }
             song_data.append(song_info)
             
-        with open("song_data.csv", mode="w", newline="", encoding="utf-8-sig") as csv_file:
-            writer = csv.DictWriter(csv_file, fieldnames=["song_name", "singer_name", "song_language"])
+        with open("playlist.csv", mode="w", newline="", encoding="utf-8-sig") as csv_file:
+            writer = csv.DictWriter(csv_file, fieldnames=["song_name", "singer_name", "song_language","track_id"])
             writer.writeheader()
             writer.writerows(song_data)
         return True
