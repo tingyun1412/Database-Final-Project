@@ -1,7 +1,13 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, session, url_for, flash
+import requests
 import csv
 import mysql.connector
 from collections import Counter
+
+CLIENT_ID = "01dfa2aba3384ac4ba4b278af29d2f6d"
+CLIENT_SECRET = "e672de7d54d34ef4b745be950e084e5b"
+REDIRECT_URI = "http://localhost:8888/spotify_callback"
+SCOPE = "user-top-read playlist-modify-public playlist-modify-private"
 
 # Flask App Initialization
 app = Flask(__name__)
@@ -11,8 +17,8 @@ app.secret_key = "your_secret_key"
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'yourpassword',
-    'database': 'final'
+    'password': 'Ann940716',
+    'database': 'final_project'
 }
 
 # Database Connection
@@ -134,7 +140,133 @@ def index():
                            singer_count=singer_count,
                            timing_count=timing_count)
 
+@app.route('/create_spotify_playlist', methods=['POST'])
+def create_spotify_playlist():
+   playlist_data = fetch_playlist_data()
+   
+   # 檢查是否已授權
+   if 'spotify_token' not in session:
+       # 存儲歌單資料到session
+       session['playlist_data'] = playlist_data
+       
+       auth_url = (
+           "https://accounts.spotify.com/authorize"
+           f"?client_id={CLIENT_ID}"
+           "&response_type=code" 
+           f"&redirect_uri={REDIRECT_URI}"
+           f"&scope={SCOPE}"
+           "&show_dialog=true"
+       )
+       return redirect(auth_url)
+   
+   # 已授權則直接建立歌單
+   token = session['spotify_token']
+   create_spotify_playlist_with_token(token, playlist_data)
+   return redirect(url_for('show_playlist'))
 
+
+@app.route('/spotify_callback')
+def spotify_callback():
+    try:
+        # Get authorization code
+        code = request.args.get("code")
+        if not code:
+            return redirect(url_for('index'))
+            
+        # Get access token
+        access_token = get_spotify_token(code)
+        
+        # Create playlist and add songs
+        playlist_link = create_spotify_playlist_with_songs(access_token)
+        
+        # Render template with playlist
+        return display_playlist_page(playlist_link)
+        
+    except Exception as e:
+        print(f"Error in Spotify callback: {str(e)}")
+        return redirect(url_for('index'))
+
+def get_spotify_token(code):
+    response = requests.post(
+        "https://accounts.spotify.com/api/token",
+        data={
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": REDIRECT_URI, 
+            "client_id": CLIENT_ID,
+            "client_secret": CLIENT_SECRET
+        }
+    )
+    return response.json()["access_token"]
+
+def create_spotify_playlist_with_songs(access_token):
+    PLAYLIST_NAME = "My Filtered Playlist"
+    PLAYLIST_DESC = "Filtered playlist"
+    
+    headers = {"Authorization": f"Bearer {access_token}"}
+    
+    # Get user ID
+    user_response = requests.get("https://api.spotify.com/v1/me", headers=headers)
+    user_id = user_response.json()["id"]
+    
+    # Create playlist
+    playlist = requests.post(
+        f"https://api.spotify.com/v1/users/{user_id}/playlists",
+        headers=headers,
+        json={
+            "name": PLAYLIST_NAME,
+            "description": PLAYLIST_DESC,
+            "public": True
+        }
+    ).json()
+    
+    # Add songs
+    playlist_id = playlist["id"]
+    playlist_data = fetch_playlist_data()
+    
+    for song in playlist_data:
+        search_query = f"track:{song['song_name']} artist:{song['singer_name']}"
+        search_response = requests.get(
+            "https://api.spotify.com/v1/search",
+            headers=headers,
+            params={
+                "q": search_query,
+                "type": "track",
+                "limit": 1
+            }
+        )
+        
+        if search_response.json()["tracks"]["items"]:
+            track_uri = search_response.json()["tracks"]["items"][0]["uri"]
+            requests.post(
+                f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks",
+                headers=headers,
+                json={"uris": [track_uri]}
+            )
+            
+    return playlist["external_urls"]["spotify"]
+
+def display_playlist_page(playlist_link):
+    playlist_data = fetch_playlist_data()
+    return render_template('interface.html',
+        playlist=playlist_data,
+        genre_count=Counter(row['song_genre'] for row in playlist_data),
+        language_count=Counter(row['song_language'] for row in playlist_data),
+        singer_count=Counter(row['singer_name'] for row in playlist_data), 
+        timing_count=Counter(row['song_timing'] for row in playlist_data),
+        playlist_link=playlist_link
+    )
+    
+@app.route('/show_playlist')
+def show_playlist():
+    playlist_data = fetch_playlist_data()
+    return render_template('interface.html',
+        playlist=playlist_data,
+        genre_count=Counter(row['song_genre'] for row in playlist_data),
+        language_count=Counter(row['song_language'] for row in playlist_data),
+        singer_count=Counter(row['singer_name'] for row in playlist_data),
+        timing_count=Counter(row['song_timing'] for row in playlist_data)
+    )
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=8888)
