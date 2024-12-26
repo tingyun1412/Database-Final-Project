@@ -71,9 +71,36 @@ def fetch_playlist_data():
     try:
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        cursor.execute(
-            "SELECT p.song_name, p.singer_name, p.song_language,s.song_genre,s.song_timing FROM playlist p JOIN Song s ON s.song_name=p.song_name"
-        )
+        query='''
+            SELECT p.song_name, p.singer_name,
+            CASE 
+                WHEN p.singer_name IN (SELECT singer_name FROM Singer) THEN 
+                    (SELECT singer_gender FROM Singer WHERE Singer.singer_name = p.singer_name LIMIT 1)
+                ELSE 
+                    'unknown'
+            END AS singer_gender,
+            p.song_language,
+            CASE 
+                WHEN p.song_name IN (SELECT song_name FROM Song) THEN 
+                    (SELECT song_genre FROM Song WHERE Song.song_name = p.song_name LIMIT 1)
+                ELSE 
+                    'unknown'
+            END AS song_genre,
+            CASE 
+                WHEN p.song_name IN (SELECT song_name FROM Song) THEN 
+                    (SELECT song_timing FROM Song WHERE Song.song_name = p.song_name LIMIT 1)
+                ELSE 
+                    'unknown'
+            END AS song_timing,
+            CASE 
+                WHEN p.song_name IN (SELECT song_name FROM Album) THEN 
+                    (SELECT album_name FROM Album WHERE Album.song_name = p.song_name LIMIT 1)
+                ELSE 
+                    'unknown'
+            END AS album_name
+            FROM playlist p
+        '''
+        cursor.execute(query)
         return cursor.fetchall()
     except mysql.connector.Error as e:
         print(f"Database Error: {e}")

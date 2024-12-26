@@ -95,6 +95,8 @@
                     <th>Language</th>
                     <th>Genre</th>
                     <th>Emotion</th>
+                    <th>Album Name</th>
+                    <th>Singer Gender</th>
                 </tr>
             </thead>
             <tbody>
@@ -105,10 +107,12 @@
                     <td>{{ row.song_language }}</td>
                     <td>{{ row.song_genre }}</td>
                     <td>{{ row.song_timing }}</td>
+                    <td>{{ row.album_name }}</td>
+                    <td>{{ row.singer_gender }}</td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="5">No data available</td>
+                    <td colspan="7">No data available</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -133,7 +137,7 @@
     <div class="filters"></div>
         <h3>選擇過濾條件</h3>
         <div id="filterContainer"></div>
-        <button onclick="filterSongs()">Sure</button>
+        <button onclick="filterSongs()">篩選</button>
     </div>
 
     <div class="song-list">
@@ -224,9 +228,9 @@
 
         function populateFilters() {
             const filterContainer = document.getElementById("filterContainer");
-            const columns = ["Language", "Singer", "Genre", "Timing"];
+            const columns = ["Singer","Language", "Genre", "Timing"];
             columns.forEach((col, index) => {
-                const uniqueValues = getUniqueValues(index + 2); // Skip first two columns (Song Name, Singer Name)
+                const uniqueValues = getUniqueValues(index + 1); // Skip first two columns (Song Name, Singer Name)
                 const filterGroup = document.createElement("div");
                 filterGroup.innerHTML = `<strong>${col}:</strong>`;
                 uniqueValues.forEach(value => {
