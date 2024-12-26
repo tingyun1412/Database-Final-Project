@@ -6,77 +6,293 @@
     <title>喜好歌單分析</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-    <link rel="stylesheet" href="interface.css">
+    <style>
+        #songTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: #333;
+        }
+
+        #songTable th, #songTable td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        #songTable th {
+            background-color: #f4f4f4;
+            font-weight: bold;
+        }
+
+        #songTable tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        #songTable tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+        }
+
+        .sidebar {
+            padding: 10px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            border-right: 2px solid #ccc;
+        }
+
+        .content {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .buttons {
+            margin-bottom: 20px;
+        }
+
+        .buttons button {
+            margin-right: 10px;
+            padding: 8px 16px;
+        }
+
+        .chart-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        canvas {
+            display: none;
+        }
+        .filters {
+            margin-bottom: 20px;
+        }
+
+        .filters label {
+            margin-right: 20px;
+        }
+
+        .filters button {
+            margin-top: 10px;
+            padding: 8px 16px;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <!-- 側邊欄：顯示"喜好歌單"文字 -->
-        <div class="sidebar">
-            <!-- 文件上傳輸入框 -->
-            <input type="file" id="csvFileInput" accept=".csv" onchange="handleUserUpload(event)" />
-            <table id="songTable">
-                <thead>
-                    <tr>
-                        <th>Song Name</th>
-                        <th>Singer Name</th>
-                        <th>Language</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- 動態資料會插入到這裡 -->
-                </tbody>
-            </table>
+    <div class="sidebar">
+        <table id="songTable">
+            <thead>
+                <tr>
+                    <th>Song Name</th>
+                    <th>Singer Name</th>
+                    <th>Language</th>
+                    <th>Genre</th>
+                    <th>Emotion</th>
+                    <th>Album Name</th>
+                    <th>Singer Gender</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in playlist %}
+                <tr>
+                    <td>{{ row.song_name }}</td>
+                    <td>{{ row.singer_name }}</td>
+                    <td>{{ row.song_language }}</td>
+                    <td>{{ row.song_genre }}</td>
+                    <td>{{ row.song_timing }}</td>
+                    <td>{{ row.album_name }}</td>
+                    <td>{{ row.singer_gender }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7">No data available</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="content">
+        <div class="buttons">
+            <button onclick="showAnalysis('language')">語言</button>
+            <button onclick="showAnalysis('genre')">風格</button>
+            <button onclick="showAnalysis('emotion')">Emo指數</button>
+            <button onclick="showAnalysis('artist')">歌手</button>
         </div>
 
-        <!-- 主內容區 -->
-        <div class="content">
-            <!-- 選擇按鈕 -->
-            <div class="buttons">
-                <button onclick="showAnalysis('language')">語言</button>
-                <button onclick="showAnalysis('genre')">風格</button>
-                <button onclick="showAnalysis('emotion')">Emo指數</button>
-                <button onclick="showAnalysis('artist')">歌手</button>
-            </div>
-
-            <!-- 圓餅圖和右側選項區域 -->
-            <div class="chart-container">
-                <div class="chart">
-                    <canvas id="languageChart"></canvas>
-                </div>
-
-                <!-- 右側選項和創建歌單 -->
-                <div class="right-panel">
-                    <!-- 分析結果選擇區域 -->
-                    <div class="options" id="options"></div>
-                
-                    <!-- 顯示歌單 -->
-                    <div class="song-list"></div>
-                
-                    <!-- 創建歌單按鈕 -->
-                    <div class="create-playlist">
-                        <input type="button" value="創建歌單" onclick="location.href='newplaylist.html'" />
-                    </div>
-                </div>
-                
-            </div>
+        <div class="chart-container">
+            <canvas id="languageChart"></canvas>
+            <canvas id="genreChart"></canvas>
+            <canvas id="timingChart"></canvas>
+            <canvas id="singerChart"></canvas>
         </div>
     </div>
-
-    <div class="filters">
-        <div id="language-options" class="filter-group"></div>
-        <div id="singer-options" class="filter-group"></div>
-    </div>
-    
-    <div class="charts">
-        <canvas id="languageChart"></canvas>
-        <canvas id="singerChart"></canvas>
-    </div>
-    
-    <div class="buttons">
-        <button onclick="showLanguageAnalysis()">語言分析</button>
-        <button onclick="showSingerAnalysis()">歌手分析</button>
+    <div class="filters"></div>
+        <h3>選擇過濾條件</h3>
+        <div id="filterContainer"></div>
+        <button onclick="filterSongs()">篩選</button>
     </div>
 
-    <script src="language_singer_filter.js"></script>
+    <div class="song-list">
+        <h3>篩選後的歌曲</h3>
+        <ul id="filteredSongs"></ul>
+        <button id="createPlaylistButton" style="display:none;" onclick="createPlaylist()">建立歌單</button>
+    </div>
+    <script>
+        const timingData = {{ timing_count | tojson }};
+        const genreData = {{ genre_count | tojson }};
+        const languageData = {{ language_count | tojson }};
+        const singerData = {{ singer_count | tojson }};
+        let currentChart = null; // Track the current chart instance
+
+        // Function to create a pie chart
+        function createPieChart(ctx, data, label) {
+            // Destroy any existing chart before creating a new one
+            if (currentChart) {
+                currentChart.destroy();
+            }
+
+            // Create the chart
+            currentChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(data),
+                    datasets: [{
+                        data: Object.values(data),
+                        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#FF5733', '#FF8C00'],
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(tooltipItem) {
+                                    return tooltipItem.label + ': ' + tooltipItem.raw + ' songs';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Display analysis chart
+        function showAnalysis(type) {
+            // Hide all canvases
+            document.querySelectorAll('canvas').forEach(canvas => {
+                canvas.style.display = 'none';
+            });
+
+            let ctx, data;
+            if (type === 'language') {
+                ctx = document.getElementById('languageChart');
+                data = languageData;
+            } else if (type === 'genre') {
+                ctx = document.getElementById('genreChart');
+                data = genreData;
+            } else if (type === 'emotion') {
+                ctx = document.getElementById('timingChart');
+                data = timingData;
+            } else if (type === 'artist') {
+                ctx = document.getElementById('singerChart');
+                data = singerData;
+            }
+
+            if (ctx && data) {
+                ctx.style.display = 'block';
+                createPieChart(ctx, data, type);
+            } else {
+                alert('No data available for this category.');
+            }
+        }
+        function getUniqueValues(columnIndex) {
+            const rows = document.querySelectorAll("#songTable tbody tr");
+            const values = new Set();
+            rows.forEach(row => {
+                const cell = row.cells[columnIndex];
+                if (cell) values.add(cell.textContent.trim());
+            });
+            return Array.from(values);
+        }
+
+        function populateFilters() {
+            const filterContainer = document.getElementById("filterContainer");
+            const columns = ["Singer","Language", "Genre", "Timing"];
+            columns.forEach((col, index) => {
+                const uniqueValues = getUniqueValues(index + 1); // Skip first two columns (Song Name, Singer Name)
+                const filterGroup = document.createElement("div");
+                filterGroup.innerHTML = `<strong>${col}:</strong>`;
+                uniqueValues.forEach(value => {
+                    const label = document.createElement("label");
+                    label.innerHTML = `<input type="checkbox" class="filter" data-type="${col.toLowerCase()}" value="${value}"> ${value}`;
+                    filterGroup.appendChild(label);
+                });
+                filterContainer.appendChild(filterGroup);
+            });
+        }
+
+        function filterSongs() {
+            const selectedFilters = { language: [], singer: [], genre: [], timing: [] };
+            document.querySelectorAll(".filter:checked").forEach(checkbox => {
+                const type = checkbox.getAttribute("data-type");
+                const value = checkbox.value;
+                selectedFilters[type].push(value);
+            });
+
+            const rows = document.querySelectorAll("#songTable tbody tr");
+            const filteredSongs = [];
+            rows.forEach(row => {
+                const cells = row.cells;
+                const song = {
+                    song_name: cells[0].textContent.trim(),
+                    singer_name: cells[1].textContent.trim(),
+                    language: cells[2].textContent.trim(),
+                    genre: cells[3].textContent.trim(),
+                    timing: cells[4].textContent.trim()
+                };
+
+                const matchesFilter = (!selectedFilters.language.length || selectedFilters.language.includes(song.language)) &&
+                                      (!selectedFilters.singer.length || selectedFilters.singer.includes(song.singer_name)) &&
+                                      (!selectedFilters.genre.length || selectedFilters.genre.includes(song.genre)) &&
+                                      (!selectedFilters.timing.length || selectedFilters.timing.includes(song.timing));
+                if (matchesFilter) filteredSongs.push(song.song_name);
+            });
+
+            const filteredSongsList = document.getElementById("filteredSongs");
+            filteredSongsList.innerHTML = "";
+            filteredSongs.forEach(song => {
+                const li = document.createElement("li");
+                li.textContent = song;
+                filteredSongsList.appendChild(li);
+            });
+
+            const createPlaylistButton = document.getElementById("createPlaylistButton");
+            createPlaylistButton.style.display = filteredSongs.length ? "block" : "none";
+        }
+
+        function createPlaylist() {
+            const selectedSongs = [];
+            document.querySelectorAll("#filteredSongs li").forEach(item => {
+                selectedSongs.push(item.textContent);
+            });
+
+            localStorage.setItem("playlist", JSON.stringify(selectedSongs));
+            window.location.href = "newplaylist.html";
+        }
+
+        // Initialize filters
+        document.addEventListener("DOMContentLoaded", populateFilters);
+    </script>
 </body>
 </html>
