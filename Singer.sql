@@ -14,7 +14,7 @@ CREATE TABLE SingerStaging (
     singer_nation VARCHAR(50)
 );
 
-LOAD DATA INFILE '/var/lib/mysql-files/singer1114.csv'
+LOAD DATA INFILE "C:\Users\User\Desktop\DBMS\Database-Final-Project\singer1114.csv"
 INTO TABLE SingerStaging
 CHARACTER SET utf8mb4
 FIELDS TERMINATED BY ',' 

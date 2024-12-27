@@ -13,7 +13,7 @@ CREATE TABLE AlbumStaging (
     singer_name VARCHAR(255)
 );
 
-LOAD DATA INFILE '/var/lib/mysql-files/album.csv'
+LOAD DATA INFILE 'C:\Users\User\Desktop\DBMS\Database-Final-Project\album.csv'
 INTO TABLE AlbumStaging
 CHARACTER SET utf8mb4
 FIELDS TERMINATED BY ',' 

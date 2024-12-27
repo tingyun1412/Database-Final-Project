@@ -86,6 +86,9 @@
     </style>
 </head>
 <body>
+    
+    <button onclick="generatePlaylist()">獲取喜好歌單</button>
+
     <div class="sidebar">
         <table id="songTable">
             <thead>
@@ -143,6 +146,7 @@
     <div class="song-list">
         <h3>篩選後的歌曲</h3>
         <ul id="filteredSongs"></ul>
+        <button id="authSpotify" onclick="window.location.href='/spotify_auth'">Spotify 授權</button>
         <button id="createPlaylistButton" style="display:none;" onclick="createPlaylist()">建立歌單</button>
     </div>
     <script>
@@ -151,6 +155,46 @@
         const languageData = {{ language_count | tojson }};
         const singerData = {{ singer_count | tojson }};
         let currentChart = null; // Track the current chart instance
+        //
+        //
+        function generatePlaylist() {
+            fetch('/generate_playlist', {
+                method: 'POST',
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                if (data.message.includes("successfully")) {
+                    location.reload(); // 重新載入頁面以顯示更新後的歌單
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+        
+        //Function to create playlist
+        function createPlaylist() {
+            const selectedSongs = [];
+            document.querySelectorAll("#filteredSongs li").forEach(item => {
+                selectedSongs.push(item.textContent);
+            });
+        
+            fetch('/create_playlist', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    selected_songs: selectedSongs
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
 
         // Function to create a pie chart
         function createPieChart(ctx, data, label) {
@@ -281,16 +325,7 @@
             createPlaylistButton.style.display = filteredSongs.length ? "block" : "none";
         }
 
-        function createPlaylist() {
-            const selectedSongs = [];
-            document.querySelectorAll("#filteredSongs li").forEach(item => {
-                selectedSongs.push(item.textContent);
-            });
-
-            localStorage.setItem("playlist", JSON.stringify(selectedSongs));
-            window.location.href = "newplaylist.html";
-        }
-
+        
         // Initialize filters
         document.addEventListener("DOMContentLoaded", populateFilters);
     </script>

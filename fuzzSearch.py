@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 import langid
 
 # Genius API 設定
-genius_access_token = 'gjQoDmdpOifVgefmu1fYrfMk5Q5T7jWmEJVAa3qWw0sR2LR_8DtMTVsVxfM8Kwwb'  # 替換為您的 Genius API 金鑰
+genius_access_token = 'mTFhullvxvc--JQf-ai9u9N33fw_fNDANvw3W7ogp7kFBGGocJFpgH4qEp4tJOCU'  # 替換為您的 Genius API 金鑰
 genius_search_url = "https://api.genius.com/search"
 genius_headers = {
     "Authorization": f"Bearer {genius_access_token}"
@@ -64,12 +64,18 @@ def get_lyrics_from_genius(song_url):
 
     # 嘗試使用更通用的 class 選擇器來抓取歌詞
     lyrics = ""
+    '''
     for div in soup.find_all("div", class_=lambda x: x and "Lyrics__Container" in x):
         lyrics += div.get_text(separator="\n")
-
+    '''
+    for div in soup.find_all("div", attrs={"data-lyrics-container": "true"}):
+        lyrics += div.get_text(separator="\n")
     # 顯示解析出的歌詞
     if lyrics:
-        #print("解析出的歌詞：")
+
+        print("成功取得歌詞")
+        #
+       # print("解析出的歌詞：")
         #print(lyrics)  # 顯示歌詞內容以供確認
         return lyrics
     else:

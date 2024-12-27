@@ -30,7 +30,7 @@ CREATE TABLE SongStaging (
     song_genre varchar(50)
 );
 
-LOAD DATA INFILE '/var/lib/mysql-files/Song.csv'
+LOAD DATA INFILE 'C:\Users\User\Desktop\DBMS\Database-Final-Project\Song.csv'
 IGNORE INTO TABLE SongStaging
 FIELDS TERMINATED BY ','
 ENCLOSED BY '"'

@@ -3,3 +3,4 @@ requests
 fuzzywuzzy
 langid
 beautifulsoup4
+python-Levenshtein

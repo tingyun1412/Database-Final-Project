@@ -3,7 +3,7 @@ import webbrowser
 import requests
 import csv
 from fuzzSearch import search_genius_lyrics, get_lyrics_from_genius, detect_lyrics_language
-
+import os
 app = Flask(__name__)
 
 CLIENT_ID = "01dfa2aba3384ac4ba4b278af29d2f6d"
@@ -116,7 +116,9 @@ def callback():
         return f"處理過程中發生錯誤：{str(e)}"
 
     return "處理失敗"
-
+@app.route('/shutdown', methods=['POST'])
+def shutdown():
+    os._exit(0)
 if __name__ == "__main__":
     webbrowser.open("http://127.0.0.1:8888")
-    app.run(port=8888, debug=True)
+    app.run(port=8890, debug=True)
