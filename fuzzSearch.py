@@ -64,7 +64,7 @@ def get_lyrics_from_genius(song_url):
 
     # 嘗試使用更通用的 class 選擇器來抓取歌詞
     lyrics = ""
-    for div in soup.find_all("div", class_=lambda x: x and "Lyrics__Container" in x):
+    for div in soup.find_all("div", attrs={"data-lyrics-container": "true"}):
         lyrics += div.get_text(separator="\n")
 
     # 顯示解析出的歌詞
