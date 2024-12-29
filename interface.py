@@ -17,7 +17,7 @@ app.secret_key = "your_secret_key"
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'Ann940716',
+    'password': '20050616',
     'database': 'final_project'
 }
 
@@ -52,11 +52,11 @@ def insert_csv_data_into_playlist(csv_file):
             connection = get_db_connection()
             cursor = connection.cursor()
 
-            insert_query = "INSERT INTO playlist (song_name, singer_name, song_language) VALUES (%s, %s, %s)"
+            insert_query = "INSERT INTO playlist (song_name, singer_name, song_language, song_id) VALUES (%s, %s, %s,%s)"
             
             for row in csv_reader:
                 print(f"Row data: {row}")  # Print the row to check its contents
-                cursor.execute(insert_query, (row['song_name'], row['singer_name'], row['song_language']))
+                cursor.execute(insert_query, (row['song_name'], row['singer_name'], row['song_language'],row['track_id']))
             
             connection.commit()
             print(f"Data from {csv_file} inserted successfully.")
@@ -161,6 +161,7 @@ def create_spotify_playlist():
             return jsonify({'redirect': auth_url})
         
         # 直接使用 create_spotify_playlist_with_songs
+       
         playlist_link = create_spotify_playlist_with_songs(session['spotify_token'], filtered_songs)
         return jsonify({'playlist_link': playlist_link})
         print("playlist link",playlist_link)

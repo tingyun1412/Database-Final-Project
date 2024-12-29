@@ -3,12 +3,13 @@ import webbrowser
 import requests
 import csv
 from fuzzSearch import search_genius_lyrics, get_lyrics_from_genius, detect_lyrics_language
-
+import sys
+import os
 app = Flask(__name__)
 
 CLIENT_ID = "01dfa2aba3384ac4ba4b278af29d2f6d"
 CLIENT_SECRET = "e672de7d54d34ef4b745be950e084e5b"
-REDIRECT_URI = "http://localhost:8888/callback"
+REDIRECT_URI = "http://localhost:5000/callback"
 SCOPE = "user-top-read"
 
 def process_songs(access_token):
@@ -83,6 +84,9 @@ def callback():
         
         access_token = token_response.json()["access_token"]
         if process_songs(access_token):
+            shutdown_flask()
+            return "處理完成，應用已關閉。"
+            '''
             return """
                 <!DOCTYPE html>
                 <html>
@@ -112,11 +116,21 @@ def callback():
                 </body>
                 </html>
             """
+           ''' 
+            
     except Exception as e:
         return f"處理過程中發生錯誤：{str(e)}"
 
     return "處理失敗"
 
+def shutdown_flask():
+    func = request.environ.get('werkzeug.server.shutdown')
+    if func:
+        func()
+    else:
+        #print("無法關閉 Flask，請檢查應用環境。") 
+        os._exit(0)
+        sys.exit(0)  # 強制退出
 if __name__ == "__main__":
-    webbrowser.open("http://127.0.0.1:8888")
-    app.run(port=8888, debug=True)
+    webbrowser.open("http://127.0.0.1:5000")
+    app.run(port=5000, debug=True)

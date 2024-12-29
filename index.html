@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify 喜好歌單分析</title>
+</head>
+<body>
+    <h1>喜好歌單分析工具</h1>
+    <button id="runProcess">開始處理歌單</button>
+    <p id="status"></p>
+    <script>
+        document.getElementById("runProcess").addEventListener("click", () => {
+            document.getElementById("status").innerText = "正在處理，請稍候...";
+            fetch('/start_process')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("status").innerText = data.message;
+                })
+                .catch(error => {
+                    document.getElementById("status").innerText = "發生錯誤：" + error;
+                });
+        });
+    </script>
+</body>
+</html>
