@@ -3,6 +3,7 @@
 ## 📌 Project Purpose
 
 This application utilizes the Spotify API to collect a user's top 20 most-listened-to tracks in the past six months. It analyzes the data (such as song language, genre, artist, timing, gender, etc.), visualizes the statistics, and allows users to **filter and generate customized Spotify playlists** based on their preferences.
+<img width="1433" height="795" alt="image" src="https://github.com/user-attachments/assets/39f41fb0-6161-4e09-b93a-45b18267ccf6" />
 
 ---
 
