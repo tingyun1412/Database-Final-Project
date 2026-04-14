@@ -3,7 +3,8 @@
 ## 📌 Project Purpose
 
 This application utilizes the Spotify API to collect a user's top 20 most-listened-to tracks in the past six months. It analyzes the data (such as song language, genre, artist, timing, gender, etc.), visualizes the statistics, and allows users to **filter and generate customized Spotify playlists** based on their preferences.
-<img width="1433" height="795" alt="image" src="https://github.com/user-attachments/assets/39f41fb0-6161-4e09-b93a-45b18267ccf6" />
+
+![Dashboard Preview](demo/image.png)
 
 ---
 
@@ -19,6 +20,7 @@ This application utilizes the Spotify API to collect a user's top 20 most-listen
 - **ER diagram** and schema are detailed in the project report (`Database_Project_Team04.pdf`)
 
 ---
+
 ## 🔧 Application Workflow
 
 ### 🔐 1. Login (Spotify Authorization)
@@ -49,6 +51,57 @@ This application utilizes the Spotify API to collect a user's top 20 most-listen
 - Playlist link is returned and displayed
 
 ---
+
+## 🚀 Setup
+
+### Prerequisites
+- Python 3.x
+- MySQL 8.x
+- A Spotify Developer account ([Create app here](https://developer.spotify.com/dashboard))
+
+### 1. Database
+
+```sql
+CREATE DATABASE final_project;
+```
+
+Import the schema files:
+
+```bash
+mysql -u root -p final_project < Singer.sql
+mysql -u root -p final_project < Song.sql
+mysql -u root -p final_project < Album.sql
+```
+
+### 2. Configuration
+
+Edit `interface.py` and update the database config and Spotify credentials:
+
+```python
+db_config = {
+    'host': 'localhost',
+    'user': 'root',
+    'password': 'YOUR_PASSWORD',
+    'database': 'final_project'
+}
+
+CLIENT_ID = "YOUR_SPOTIFY_CLIENT_ID"
+CLIENT_SECRET = "YOUR_SPOTIFY_CLIENT_SECRET"
+```
+
+In your Spotify app dashboard, add `http://localhost:8888/spotify_callback` as a Redirect URI.
+
+### 3. Install & Run
+
+```bash
+pip install -r requirements.txt
+python interface.py
+```
+
+Open [http://localhost:8888](http://localhost:8888)
+
+---
+
 ## 🔗 Links
 
 - **GitHub Repository**:  
@@ -56,4 +109,3 @@ This application utilizes the Spotify API to collect a user's top 20 most-listen
 
 - **Demo Video**:  
   [https://youtu.be/Xta4iSIw7hg?si=5s8pI2CYruIfi_Oq](https://youtu.be/Xta4iSIw7hg?si=5s8pI2CYruIfi_Oq)
-

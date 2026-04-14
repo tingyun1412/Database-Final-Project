@@ -15,7 +15,7 @@ app.secret_key = "your_secret_key"
 
 # Database Configuration
 db_config = {
-    'host': 'localhost',
+    'host': '198.19.249.241',
     'user': 'root',
     'password': '20050616',
     'database': 'final_project'
@@ -53,14 +53,14 @@ def insert_csv_data_into_playlist(csv_file):
             cursor = connection.cursor()
 
             insert_query = "INSERT INTO playlist (song_name, singer_name, song_language, song_id) VALUES (%s, %s, %s,%s)"
-            
+
             for row in csv_reader:
                 print(f"Row data: {row}")  # Print the row to check its contents
                 cursor.execute(insert_query, (row['song_name'], row['singer_name'], row['song_language'],row['track_id']))
-            
+
             connection.commit()
             print(f"Data from {csv_file} inserted successfully.")
-    
+
     except mysql.connector.Error as e:
         print(f"Database Error: {e}")
     except Exception as e:
@@ -79,29 +79,29 @@ def fetch_playlist_data():
         cursor = connection.cursor(dictionary=True)
         query='''
             SELECT p.song_name, p.singer_name,
-            CASE 
-                WHEN p.singer_name IN (SELECT singer_name FROM Singer) THEN 
+            CASE
+                WHEN p.singer_name IN (SELECT singer_name FROM Singer) THEN
                     (SELECT singer_gender FROM Singer WHERE Singer.singer_name = p.singer_name LIMIT 1)
-                ELSE 
+                ELSE
                     'unknown'
             END AS singer_gender,
             p.song_language,
-            CASE 
-                WHEN p.song_name IN (SELECT song_name FROM Song) THEN 
+            CASE
+                WHEN p.song_name IN (SELECT song_name FROM Song) THEN
                     (SELECT song_genre FROM Song WHERE Song.song_name = p.song_name LIMIT 1)
-                ELSE 
+                ELSE
                     'unknown'
             END AS song_genre,
-            CASE 
-                WHEN p.song_name IN (SELECT song_name FROM Song) THEN 
+            CASE
+                WHEN p.song_name IN (SELECT song_name FROM Song) THEN
                     (SELECT song_timing FROM Song WHERE Song.song_name = p.song_name LIMIT 1)
-                ELSE 
+                ELSE
                     'unknown'
             END AS song_timing,
-            CASE 
-                WHEN p.song_name IN (SELECT song_name FROM Album) THEN 
+            CASE
+                WHEN p.song_name IN (SELECT song_name FROM Album) THEN
                     (SELECT album_name FROM Album WHERE Album.song_name = p.song_name LIMIT 1)
-                ELSE 
+                ELSE
                     'unknown'
             END AS album_name
             FROM playlist p
@@ -125,15 +125,15 @@ def index():
     languages = [row['song_language'] for row in playlist_data]
     singers = [row['singer_name'] for row in playlist_data]
     timings = [row['song_timing'] for row in playlist_data]
-    
+
     # Count occurrences for each category
     genre_count = Counter(genres)
     language_count = Counter(languages)
     singer_count = Counter(singers)
     timing_count = Counter(timings)
-    
+
     # Pass the data to the template
-    return render_template('interface.html', 
+    return render_template('interface.html',
                            playlist=playlist_data,
                            genre_count=genre_count,
                            language_count=language_count,
@@ -146,26 +146,24 @@ def create_spotify_playlist():
         filtered_songs = request.json.get('filtered_songs', [])
         if not filtered_songs:
             return jsonify({'error': '沒有選擇任何歌曲'}), 400
-        
+
         if 'spotify_token' not in session:
             # 保存篩選後的歌曲到 session
             session['filtered_songs'] = filtered_songs
             auth_url = (
                 "https://accounts.spotify.com/authorize"
                 f"?client_id={CLIENT_ID}"
-                "&response_type=code" 
+                "&response_type=code"
                 f"&redirect_uri={REDIRECT_URI}"
                 f"&scope={SCOPE}"
                 "&show_dialog=true"
             )
             return jsonify({'redirect': auth_url})
-        
+
         # 直接使用 create_spotify_playlist_with_songs
-       
         playlist_link = create_spotify_playlist_with_songs(session['spotify_token'], filtered_songs)
         return jsonify({'playlist_link': playlist_link})
-        print("playlist link",playlist_link)
-        
+
     except Exception as e:
         print(f"Error creating playlist: {str(e)}")
         return redirect(url_for('index'))
@@ -178,24 +176,24 @@ def spotify_callback():
         # Get authorization code
         code = request.args.get("code")
         print(f"Received auth code: {code[:10]}...")  # 新增日誌
-        
+
         if not code:
             print("No authorization code received")  # Debug log
             return redirect(url_for('index'))
-            
+
         # Get access token
-        print(f"Got authorization code: {code[:10]}...") 
+        print(f"Got authorization code: {code[:10]}...")
         access_token = get_spotify_token(code)
         print("Successfully got access token")  # Debug log
-        
+
         session['spotify_token'] = access_token
         # Create playlist and add songs
         filtered_songs = session.get('filtered_songs', [])
         playlist_link = create_spotify_playlist_with_songs(access_token,filtered_songs)
-        
+
         # Render template with playlist
         return display_playlist_page(playlist_link)
-        
+
     except Exception as e:
         print(f"Error in Spotify callback: {str(e)}")
         return redirect(url_for('index'))
@@ -208,19 +206,19 @@ def get_spotify_token(code):
             data={
                 "grant_type": "authorization_code",
                 "code": code,
-                "redirect_uri": REDIRECT_URI, 
+                "redirect_uri": REDIRECT_URI,
                 "client_id": CLIENT_ID,
                 "client_secret": CLIENT_SECRET
             }
         )
         response_data = response.json()
-        
+
         if 'error' in response_data:
             raise Exception(f"Spotify API Error: {response_data['error']}")
-            
+
         if 'access_token' not in response_data:
             raise Exception("No access token in response")
-            
+
         return response_data["access_token"]
     except Exception as e:
         print(f"Error in get_spotify_token: {str(e)}")
@@ -229,13 +227,13 @@ def get_spotify_token(code):
 def create_spotify_playlist_with_songs(access_token,filtered_songs):
     PLAYLIST_NAME = "My Filtered Playlist"
     PLAYLIST_DESC = "Filtered playlist"
-    
+
     headers = {"Authorization": f"Bearer {access_token}"}
-    
+
     # Get user ID
     user_response = requests.get("https://api.spotify.com/v1/me", headers=headers)
     user_id = user_response.json()["id"]
-    
+
     # Create playlist
     playlist = requests.post(
         f"https://api.spotify.com/v1/users/{user_id}/playlists",
@@ -246,13 +244,13 @@ def create_spotify_playlist_with_songs(access_token,filtered_songs):
             "public": True
         }
     ).json()
-    
-    
+
+
     # Add songs
     playlist_id = playlist["id"]
     playlist_data = fetch_playlist_data()
-    
-    
+
+
     filtered_playlist_data = [song for song in playlist_data if song['song_name'] in filtered_songs]
     for song in filtered_playlist_data:
         search_query = f"track:{song['song_name']} artist:{song['singer_name']}"
@@ -266,7 +264,7 @@ def create_spotify_playlist_with_songs(access_token,filtered_songs):
             }
         )
         print(search_response)
-        
+
         if search_response.json()["tracks"]["items"]:
             track_uri = search_response.json()["tracks"]["items"][0]["uri"]
             requests.post(
@@ -274,7 +272,7 @@ def create_spotify_playlist_with_songs(access_token,filtered_songs):
                 headers=headers,
                 json={"uris": [track_uri]}
             )
-            
+
     return playlist["external_urls"]["spotify"]
 
 def display_playlist_page(playlist_link):
@@ -283,11 +281,11 @@ def display_playlist_page(playlist_link):
         playlist=playlist_data,
         genre_count=Counter(row['song_genre'] for row in playlist_data),
         language_count=Counter(row['song_language'] for row in playlist_data),
-        singer_count=Counter(row['singer_name'] for row in playlist_data), 
+        singer_count=Counter(row['singer_name'] for row in playlist_data),
         timing_count=Counter(row['song_timing'] for row in playlist_data),
         playlist_link=playlist_link
     )
-    
+
 @app.route('/show_playlist')
 def show_playlist():
     playlist_data = fetch_playlist_data()
